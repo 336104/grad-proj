@@ -49,7 +49,7 @@ class BertForTokenClassification_(BertPreTrainedModel):
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-        border_label: Optional[torch.Tensor] = None,
+        border_labels: Optional[torch.Tensor] = None,
     ) -> Union[Tuple[torch.Tensor], TokenClassifierOutput]:
         r"""
         labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -69,7 +69,7 @@ class BertForTokenClassification_(BertPreTrainedModel):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
-            border_label=border_label,
+            border_labels=border_labels,
         )
 
         sequence_output = outputs[0]
@@ -297,10 +297,10 @@ class BertEncoder_(nn.Module):
         super().__init__()
         self.config = config
         self.layer = nn.ModuleList(
-            [BertLayer_dummpy(config) for _ in range(config.num_hidden_layers / 2)]
+            [BertLayer_dummpy(config) for _ in range(config.num_hidden_layers // 2)]
             + [
                 BertLayer_(config)
-                for _ in range(config.num_hidden_layers / 2, config.num_hidden_layers)
+                for _ in range(config.num_hidden_layers // 2, config.num_hidden_layers)
             ]
         )
         self.gradient_checkpointing = False
@@ -343,6 +343,7 @@ class BertEncoder_(nn.Module):
             if self.gradient_checkpointing and self.training:
                 layer_outputs = self._gradient_checkpointing_func(
                     layer_module.__call__,
+                    border_labels,
                     hidden_states,
                     attention_mask,
                     layer_head_mask,
@@ -350,10 +351,10 @@ class BertEncoder_(nn.Module):
                     encoder_attention_mask,
                     past_key_value,
                     output_attentions,
-                    border_labels=border_labels,
                 )
             else:
                 layer_outputs = layer_module(
+                    border_labels,
                     hidden_states,
                     attention_mask,
                     layer_head_mask,
@@ -361,11 +362,9 @@ class BertEncoder_(nn.Module):
                     encoder_attention_mask,
                     past_key_value,
                     output_attentions,
-                    border_labels=border_labels,
                 )
 
             hidden_states = layer_outputs[0]
-            hidden_states = hidden_states * (border_labels - 1).unsqueeze(-1)
             if use_cache:
                 next_decoder_cache += (layer_outputs[-1],)
             if output_attentions:
@@ -418,14 +417,14 @@ class BertLayer_(nn.Module):
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
+        border_labels: Optional[torch.Tensor] = None,
+        hidden_states: torch.Tensor = None,
         attention_mask: Optional[torch.FloatTensor] = None,
         head_mask: Optional[torch.FloatTensor] = None,
         encoder_hidden_states: Optional[torch.FloatTensor] = None,
         encoder_attention_mask: Optional[torch.FloatTensor] = None,
         past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
         output_attentions: Optional[bool] = False,
-        border_labels: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor]:
         # decoder uni-directional self-attention cached key/values tuple is at positions 1,2
         self_attn_past_key_value = (
@@ -485,12 +484,13 @@ class BertLayer_(nn.Module):
             self.seq_len_dim,
             attention_output,
         )
-        outputs = (layer_output,) + outputs
+        layer_output = layer_output * (border_labels - 1).unsqueeze(-1)
 
+        outputs = (layer_output,) + outputs
         # if decoder, return the attn key/values as the last output
         if self.is_decoder:
             outputs = outputs + (present_key_value,)
-        outputs[0] = outputs[0] * (border_labels - 1).unsqueeze(-1)
+
         return outputs
 
     def feed_forward_chunk(self, attention_output):
