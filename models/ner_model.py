@@ -155,6 +155,7 @@ training_args = TrainingArguments(
     evaluation_strategy="epoch",
     save_strategy="epoch",
     logging_steps=1,
+    report_to="none",
 )
 
 
