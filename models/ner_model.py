@@ -15,7 +15,6 @@ import os
 from typing import Optional, Union
 from transformers.data.data_collator import DataCollatorMixin
 
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
 dataset = copy.deepcopy(dataset)
 dataset = dataset.rename_column("type_labels", "labels")
 
