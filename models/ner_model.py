@@ -1,10 +1,10 @@
-from data import dataset, tokenizer
+from data import dataset, tokenizer, id2label
 from transformers import (
-    AutoModelForTokenClassification,
     TrainingArguments,
     Trainer,
     DataCollatorForTokenClassification,
 )
+from models.bert.bert_injection import BertForTokenClassification_
 import copy
 import evaluate
 import numpy as np
@@ -18,18 +18,23 @@ metrics = evaluate.load("seqeval")
 
 
 def compute_metrics(p):
-    predictions, labels = p
-    predictions = np.argmax(predictions, axis=-1)
-    for prediction, label in zip(predictions, labels):
-        for p, l in zip(prediction, label):
-            if l != -100:
-                metrics.add(p, l)
-    return metrics.compute(average="macro")
+    batch_predictions, batch_labels = p
+    batch_predictions = np.argmax(batch_predictions, axis=-1)
+
+    for predictions, labels in zip(batch_predictions, batch_labels):
+        valid_predictions = []
+        valid_labels = []
+        for prediction, label in zip(predictions, labels):
+            if label != -100:
+                valid_predictions.append(id2label[prediction])
+                valid_labels.append(id2label[label])
+        metrics.add(prediction=valid_predictions, reference=valid_labels)
+    return metrics.compute()
 
 
-model = AutoModelForTokenClassification.from_pretrained(
-    "bert-base-uncased", num_labels=3
-)
+model = BertForTokenClassification_.from_pretrained("bert-base-uncased", num_labels=7)
+
+
 training_args = TrainingArguments(
     output_dir="mymodel",
     learning_rate=2e-5,
