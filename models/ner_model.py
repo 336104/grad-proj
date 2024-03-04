@@ -12,9 +12,9 @@ import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 dataset = copy.deepcopy(dataset)
-dataset = dataset.rename_column("border_labels", "labels")
+dataset = dataset.rename_column("type_labels", "labels")
 data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
-metrics = evaluate.combine(["f1", "precision", "recall"])
+metrics = evaluate.load("seqeval")
 
 
 def compute_metrics(p):
