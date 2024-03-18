@@ -1,7 +1,16 @@
+from conf import NERBertConfig
 from util.preprocess_data import dataset
 
-dataset = dataset.remove_columns(["tokens", "entities"])
-for sample in dataset["test"]:
-    if len(sample["input_ids"]) != len(sample["labels"]):
+flag = False
+for sample in dataset["train"]:
+    for tokens in sample["tokens"]:
+        # print(NERBertConfig.tokenizer.tokenize(tokens))
+        # break
+        tok = NERBertConfig.tokenizer.tokenize(tokens)
+        if tok == []:
+            flag = True
+            print(tokens)
+            break
+    if flag:
         print(sample)
-    break
+        break

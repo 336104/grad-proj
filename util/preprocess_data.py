@@ -21,7 +21,11 @@ def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
     entity_types = set()
 
     for record in data:
-        sentences = re.split(r"[。？！\n]", record["sent_body"])
+        sentence = ""
+        for token in record["sent_body"]:
+            if len(NERBertConfig.tokenizer.tokenize(token)) != 0:
+                sentence += token
+        sentences = re.split(r"[。？！\n]", sentence)
         for sentence in sentences:
             if sentence == "":
                 continue
