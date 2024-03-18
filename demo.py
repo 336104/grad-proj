@@ -1,8 +1,7 @@
-from data import dataset, tokenizer
-from transformers import DataCollatorForTokenClassification
-import copy
+from util.preprocess_data import dataset
 
-dataset = copy.deepcopy(dataset)
-dataset = dataset.rename_column("type_labels", "labels")
-data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
-data_collator(dataset["train"])
+dataset = dataset.remove_columns(["tokens", "entities"])
+for sample in dataset["test"]:
+    if len(sample["input_ids"]) != len(sample["labels"]):
+        print(sample)
+    break

@@ -1,3 +1,8 @@
-from .base_config import BaseConfig
+from pathlib import Path
+from transformers import AutoTokenizer, PreTrainedTokenizer
 
-__all__ = [BaseConfig]
+
+class NERBertConfig:
+    data_dir: Path = Path("data/wuxia")
+    checkpoint: str = "google-bert/bert-base-chinese"
+    tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(checkpoint)

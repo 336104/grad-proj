@@ -1,34 +1,45 @@
-from data import dataset, tokenizer
+from util.preprocess_data import dataset
+from conf import NERBertConfig
 from transformers import (
     AutoModelForTokenClassification,
     TrainingArguments,
     Trainer,
     DataCollatorForTokenClassification,
 )
-import copy
-import evaluate
 import numpy as np
-import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
-dataset = copy.deepcopy(dataset)
-dataset = dataset.rename_column("border_labels", "labels")
-data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
-metrics = evaluate.combine(["f1", "precision", "recall"])
+data_collator = DataCollatorForTokenClassification(tokenizer=NERBertConfig.tokenizer)
+
+
+def decode_labels(labels):
+    labels.append(-100)
+    entities = set()
+    start = 0
+    for i in range(1, len(labels)):
+        if labels[i] != labels[i - 1]:
+            if labels[i - 1] == 0 or labels[i - 1] == 2:
+                entities.add((start, i))
+            if labels[i] == 0 or labels[i] == 2:
+                start = i
+    return entities
 
 
 def compute_metrics(p):
     predictions, labels = p
     predictions = np.argmax(predictions, axis=-1)
+    tp = 0
     for prediction, label in zip(predictions, labels):
-        for p, l in zip(prediction, label):
-            if l != -100:
-                metrics.add(p, l)
-    return metrics.compute(average="macro")
+        e_pred = decode_labels(prediction)
+        e_ref = decode_labels(label)
+        tp += len(e_pred & e_ref)
+        precision = tp / len(e_pred)
+        recall = tp / len(e_ref)
+        f1 = 2 * (precision * recall) / (precision + recall)
+    return {"precision": precision, "recall": recall, "f1": f1}
 
 
 model = AutoModelForTokenClassification.from_pretrained(
-    "bert-base-uncased", num_labels=3
+    NERBertConfig.checkpoint, num_labels=3
 )
 training_args = TrainingArguments(
     output_dir="mymodel",
@@ -42,13 +53,12 @@ training_args = TrainingArguments(
     logging_steps=1,
 )
 
-
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=dataset["train"],
-    eval_dataset=dataset["validation"],
-    tokenizer=tokenizer,
+    eval_dataset=dataset["test"],
+    tokenizer=NERBertConfig.tokenizer,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
 )
