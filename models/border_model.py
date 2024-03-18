@@ -27,14 +27,16 @@ def decode_labels(labels):
 def compute_metrics(p):
     predictions, labels = p
     predictions = np.argmax(predictions, axis=-1)
-    tp = 0
+    tp, fn, fp = [1e-6] * 3
     for prediction, label in zip(predictions, labels):
-        e_pred = decode_labels(prediction)
-        e_ref = decode_labels(label)
+        e_pred = decode_labels(prediction.tolist())
+        e_ref = decode_labels(label.tolist())
         tp += len(e_pred & e_ref)
-        precision = tp / len(e_pred)
-        recall = tp / len(e_ref)
-        f1 = 2 * (precision * recall) / (precision + recall)
+        fn += len(e_ref - e_pred)
+        fp += len(e_pred - e_ref)
+    precision = tp / (fp + tp)
+    recall = tp / (fn + tp)
+    f1 = 2 * (precision * recall) / (precision + recall)
     return {"precision": precision, "recall": recall, "f1": f1}
 
 
