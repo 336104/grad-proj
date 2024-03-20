@@ -1,19 +1,9 @@
-import json
-from pathlib import Path
 from typing import List, Set, Tuple
 from conf import NERBertConfig
 import re
 from datasets import Dataset
 import numpy as np
-
-
-def gather_all_data(data_dir: Path = NERBertConfig.data_dir) -> List[dict]:
-    all_data = []
-    for path in data_dir.glob("*.json"):
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            all_data.extend(data["RecoResult"])
-    return all_data
+from util.t2s import Converter
 
 
 def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
@@ -74,7 +64,10 @@ def gen(data):
         yield d
 
 
-data = gather_all_data()
+converter = Converter(Converter.S2T)
+
+
+data = converter.gather_wuxia()
 results, types = preprocess_data(data)
 dataset = Dataset.from_generator(gen, gen_kwargs={"data": results})
 dataset = dataset.train_test_split(0.2)

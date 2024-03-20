@@ -46,14 +46,10 @@ class BorderInferencer:
         output = self.model(**tokenized_input)
         labels = output.logits.argmax(dim=-1)
         return self.decode(tokenized_input, labels)
-        # return [
-        #     tag[i][tokenized_input["attention_mask"][i].bool()][1:-1].tolist()
-        #     for i in range(tag.size(0))
-        # ]
 
 
 if __name__ == "__main__":
-    cls = BorderInferencer("mymodel/checkpoint-416")
+    cls = BorderInferencer("H336104/NERBorder")
     print(
         cls(
             [
