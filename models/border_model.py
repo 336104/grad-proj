@@ -52,7 +52,7 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     evaluation_strategy="epoch",
     save_strategy="epoch",
-    logging_steps=1,
+    logging_steps=100,
 )
 
 trainer = Trainer(

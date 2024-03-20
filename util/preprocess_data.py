@@ -21,19 +21,23 @@ def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
     entity_types = set()
 
     for record in data:
-        sentence = ""
-        for token in record["sent_body"]:
-            if len(NERBertConfig.tokenizer.tokenize(token)) != 0:
-                sentence += token
-        sentences = re.split(r"[。？！\n]", sentence)
+        sentences = re.split(r"[。？！\n]", record["sent_body"])
         for sentence in sentences:
             if sentence == "":
                 continue
-            tokens = list(sentence)
-
+            tokenized_inputs = NERBertConfig.tokenizer(sentence)
+            tokens = NERBertConfig.tokenizer.convert_ids_to_tokens(
+                tokenized_inputs["input_ids"]
+            )
+            sentence = "".join(tokens)
+            strIndex_to_listIndex = []
+            for idx, token in enumerate(tokens):
+                strIndex_to_listIndex.extend([idx] * len(token))
             entities = []
             for e in record["entities"]:
                 e_type, [e_type_name] = e.values()
+                if len(e_type_name) < 1:
+                    continue
                 entity_types.add(e_type)
                 for match in re.finditer(e_type_name, sentence):
                     start, end = match.span()
@@ -41,31 +45,28 @@ def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
                         {
                             "type": e_type,
                             "type_name": e_type_name,
-                            "start": start,
-                            "end": end,
+                            "start": strIndex_to_listIndex[start],
+                            "end": strIndex_to_listIndex[end],
                         }
                     )
             entities.sort(key=lambda e: e["start"])
-            results.append({"tokens": tokens, "entities": entities})
+            tokenized_inputs.update({"tokens": tokens, "entities": entities})
+            results.append(tokenized_inputs)
     return results, entity_types
 
 
 def add_label(examples):
     all_labels = []
     for tokens, entities in zip(examples["tokens"], examples["entities"]):
-        labels = np.ones(len(tokens) + 2, dtype=np.int8)
+        labels = np.ones(len(tokens), dtype=np.int8)
         labels[0] = -100
         labels[-1] = -100
         flag = 0
         for entity in entities:
-            labels[entity["start"] + 1 : entity["end"] + 1] = flag
+            labels[entity["start"] : entity["end"]] = flag
             flag = 2 - flag
         all_labels.append(labels.tolist())
     return {"labels": all_labels}
-
-
-def tokenize(examples):
-    return NERBertConfig.tokenizer(["".join(tokens) for tokens in examples["tokens"]])
 
 
 def gen(data):
@@ -77,4 +78,4 @@ data = gather_all_data()
 results, types = preprocess_data(data)
 dataset = Dataset.from_generator(gen, gen_kwargs={"data": results})
 dataset = dataset.train_test_split(0.2)
-dataset = dataset.map(add_label, batched=True).map(tokenize, batched=True)
+dataset = dataset.map(add_label, batched=True)
