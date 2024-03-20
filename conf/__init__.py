@@ -1,14 +1,13 @@
-from pathlib import Path
-from transformers import AutoTokenizer, PreTrainedTokenizer
+import logging
+from .log_config import setup_logger
+from .model_config import NERBertConfig
 
+# 配置日志
+project_logger_name = "ner"
+project_logging_level = logging.INFO
+# setup_logger(level=project_logging_level, name=project_logger_name)
+logger = logging.getLogger(project_logger_name)
 
-# 人物,组织,地点,功夫,武器
-class NERBertConfig:
-    data_dir: Path = Path("data/wuxia")
-    names_file: Path = Path("data/entities/人物.txt")
-    location_file: Path = Path("data/entities/地点.txt")
-    orgnization_file: Path = Path("data/entities/组织.txt")
-    kongfu_file: Path = Path("data/entities/功夫.txt")
-    equipment_file: Path = Path("data/entities/武器.txt")
-    checkpoint: str = "google-bert/bert-base-chinese"
-    tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(checkpoint)
+# 配置模型参数
+model_config = NERBertConfig()
+__all__ = [NERBertConfig, model_config, project_logger_name, logger]

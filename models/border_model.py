@@ -1,72 +1,49 @@
-from util.preprocess_data import dataset
-from conf import NERBertConfig
+from util.preprocess_data import load_data
+from conf import model_config, NERBertConfig
 from transformers import (
     AutoModelForTokenClassification,
     TrainingArguments,
     Trainer,
     DataCollatorForTokenClassification,
 )
-import numpy as np
-
-data_collator = DataCollatorForTokenClassification(tokenizer=NERBertConfig.tokenizer)
+from metrics import BorderMetric
 
 
-def decode_labels(labels):
-    labels.append(-100)
-    entities = set()
-    start = 0
-    for i in range(1, len(labels)):
-        if labels[i] != labels[i - 1]:
-            if labels[i - 1] == 0 or labels[i - 1] == 2:
-                if i - start != 1:
-                    entities.add((start, i))
-            if labels[i] == 0 or labels[i] == 2:
-                start = i
-    return entities
+class BorderModel:
+    def __init__(self, config: NERBertConfig):
+        self.data_collator = DataCollatorForTokenClassification(
+            tokenizer=model_config.tokenizer
+        )
+        self.model = AutoModelForTokenClassification.from_pretrained(
+            model_config.checkpoint, num_labels=3
+        )
+        self.dataset = load_data()
+        self.training_args = TrainingArguments(
+            output_dir=config.output_dir,
+            overwrite_output_dir=True,
+            learning_rate=config.lr,
+            per_device_train_batch_size=config.train_batch_size,
+            per_device_eval_batch_size=config.eval_batch_size,
+            num_train_epochs=config.epochs,
+            weight_decay=0.01,
+            evaluation_strategy="epoch",
+            save_strategy="epoch",
+            load_best_model_at_end=True,
+            save_total_limit=4,
+            logging_steps=100,
+        )
 
+        self.trainer = Trainer(
+            model=self.model,
+            args=self.training_args,
+            train_dataset=self.dataset["train"],
+            eval_dataset=self.dataset["test"],
+            tokenizer=model_config.tokenizer,
+            data_collator=self.data_collator,
+            compute_metrics=BorderMetric.compute_metrics,
+        )
 
-def compute_metrics(p):
-    predictions, labels = p
-    predictions = np.argmax(predictions, axis=-1)
-    tp, fn, fp = [1e-6] * 3
-    for prediction, label in zip(predictions, labels):
-        e_pred = decode_labels(prediction.tolist())
-        e_ref = decode_labels(label.tolist())
-        tp += len(e_pred & e_ref)
-        fn += len(e_ref - e_pred)
-        fp += len(e_pred - e_ref)
-    precision = tp / (fp + tp)
-    recall = tp / (fn + tp)
-    f1 = 2 * (precision * recall) / (precision + recall)
-    return {"precision": precision, "recall": recall, "f1": f1}
-
-
-model = AutoModelForTokenClassification.from_pretrained(
-    NERBertConfig.checkpoint, num_labels=3
-)
-training_args = TrainingArguments(
-    output_dir="cache/NERBorder",
-    learning_rate=2e-5,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=16,
-    num_train_epochs=1,
-    weight_decay=0.01,
-    evaluation_strategy="epoch",
-    save_strategy="epoch",
-    load_best_model_at_end=True,
-    save_total_limit=4,
-    logging_steps=100
-)
-
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=dataset["train"],
-    eval_dataset=dataset["test"],
-    tokenizer=NERBertConfig.tokenizer,
-    data_collator=data_collator,
-    compute_metrics=compute_metrics,
-)
-
-trainer.train()
-trainer.push_to_hub()
+    def train(self, push_to_hub: bool):
+        self.trainer.train()
+        if push_to_hub:
+            self.trainer.push_to_hub()

@@ -1,5 +1,5 @@
 from typing import List, Set, Tuple
-from conf import NERBertConfig
+from conf import model_config
 import re
 from datasets import Dataset
 import numpy as np
@@ -15,8 +15,8 @@ def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
         for sentence in sentences:
             if sentence == "":
                 continue
-            tokenized_inputs = NERBertConfig.tokenizer(sentence)
-            tokens = NERBertConfig.tokenizer.convert_ids_to_tokens(
+            tokenized_inputs = model_config.tokenizer(sentence)
+            tokens = model_config.tokenizer.convert_ids_to_tokens(
                 tokenized_inputs["input_ids"]
             )
             sentence = "".join(tokens)
@@ -63,12 +63,11 @@ def gen(data):
     for d in data:
         yield d
 
-
-converter = Converter(Converter.S2T)
-
-
-data = converter.gather_wuxia()
-results, types = preprocess_data(data)
-dataset = Dataset.from_generator(gen, gen_kwargs={"data": results})
-dataset = dataset.train_test_split(0.2)
-dataset = dataset.map(add_label, batched=True)
+def load_data():
+    converter = Converter(Converter.S2T)
+    data = converter.gather_wuxia()
+    results, types = preprocess_data(data)
+    dataset = Dataset.from_generator(gen, gen_kwargs={"data": results})
+    dataset = dataset.train_test_split(0.2)
+    dataset = dataset.map(add_label, batched=True)
+    return dataset
