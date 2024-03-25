@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from transformers import AutoTokenizer, PreTrainedTokenizer
 
@@ -50,6 +51,10 @@ class NERBertConfig:
         self._train_batch_size = train_batch_size
         self._eval_batch_size = eval_batch_size
         self.epochs = epochs
+        if not os.path.exists("cache"):
+            os.mkdir("cache")
+        if not os.path.exists("log"):
+            os.mkdir("log")
 
     @property
     def data_dir(self) -> Path:

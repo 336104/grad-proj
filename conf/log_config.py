@@ -41,9 +41,7 @@ def config_project_logger(level=logging.INFO, name="ner"):
     )
     if not os.path.exists("log"):
         os.mkdir("log")
-    fhd = logging.FileHandler(
-        "log/ner.log." + str(datetime.datetime.now()), encoding="utf-8"
-    )
+    fhd = logging.FileHandler("log/ner.log", encoding="utf-8")
     fhd.setFormatter(fmt)
     logger.addHandler(fhd)
     logger.setLevel(level)

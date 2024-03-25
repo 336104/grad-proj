@@ -1,16 +1,18 @@
+import logging
 from typing import List, Set, Tuple
 from conf import model_config
 import re
-from datasets import Dataset
+from datasets import Dataset, load_from_disk
 import numpy as np
 from util.t2s import Converter
+from tqdm import tqdm
 
 
 def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
     results = []
     entity_types = set()
 
-    for record in data:
+    for record in tqdm(data):
         sentences = re.split(r"[。？！\n]", record["sent_body"])
         for sentence in sentences:
             if sentence == "":
@@ -63,11 +65,19 @@ def gen(data):
     for d in data:
         yield d
 
-def load_data():
-    converter = Converter(Converter.S2T)
-    data = converter.gather_wuxia()
-    results, types = preprocess_data(data)
-    dataset = Dataset.from_generator(gen, gen_kwargs={"data": results})
-    dataset = dataset.train_test_split(0.2)
-    dataset = dataset.map(add_label, batched=True)
-    return dataset
+
+def load_data(regenerate=False):
+    if regenerate:
+        converter = Converter(Converter.T2S)
+        data = converter.gather_wuxia()
+        results, types = preprocess_data(data)
+        logging.info("start")
+        dataset = Dataset.from_generator(gen, gen_kwargs={"data": results})
+        logging.info("end")
+        dataset = dataset.train_test_split(0.2, shuffle=True)
+        dataset = dataset.map(add_label, batched=True)
+        dataset.save_to_disk("cache/wuxia")
+        return dataset
+    else:
+        dataset = load_from_disk("cache/wuxia")
+        return dataset

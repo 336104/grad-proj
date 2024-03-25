@@ -1,6 +1,5 @@
 from models.border_model import BorderModel
 from conf import model_config
-
-model_config.epochs = 1
-model = BorderModel(config=model_config)
-model.train(push_to_hub=False)
+model_config.checkpoint='cache/NERBorder/checkpoint-8320'
+model = BorderModel(model_config)
+print(model.trainer.predict(model.dataset['test']))

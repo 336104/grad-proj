@@ -43,7 +43,13 @@ class BorderModel:
             compute_metrics=BorderMetric.compute_metrics,
         )
 
-    def train(self, push_to_hub: bool):
+    def train(self, push_to_hub: bool = False):
         self.trainer.train()
         if push_to_hub:
             self.trainer.push_to_hub()
+
+    def eval(self):
+        self.trainer.evaluate()
+
+    def predict(self):
+        return self.trainer.predict()
