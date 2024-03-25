@@ -67,7 +67,7 @@ class Converter:
             "equipment": equipment,
         }
 
-    def gather_wuxia(self, data_dir: Path = model_config.data_dir) -> List[dict]:
+    def gather_data(self, data_dir: Path = model_config.data_dir) -> List[dict]:
         """gather all data to train and test model
 
         Args:

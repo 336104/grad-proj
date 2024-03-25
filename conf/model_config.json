@@ -1,0 +1,13 @@
+{
+    "active": "bert-base-chinese",
+    "bert-base-chinese": {
+        "data_dir": "data/wuxia",
+        "checkpoint": "google-bert/bert-base-chinese",
+        "lr": 2e-5,
+        "output_dir": "cache/NERBorder",
+        "train_batch_size": 16,
+        "eval_batch_size": 16,
+        "num_train_epochs": 20,
+        "data_cache_dir": "cache/wuxia"
+    }
+}

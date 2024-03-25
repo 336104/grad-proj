@@ -1,12 +1,11 @@
-import logging
 from typing import List, Set, Tuple
-from conf import model_config
+from conf import model_config, NERBertConfig, logger
 import re
 from datasets import Dataset, load_from_disk
 import numpy as np
 from util.t2s import Converter
 from tqdm import tqdm
-import os
+
 
 def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
     results = []
@@ -66,18 +65,17 @@ def gen(data):
         yield d
 
 
-def load_data(regenerate=False):
-    if regenerate or not os.path.exists('cache/wuxia'):
+def load_data(config: NERBertConfig, regenerate=False):
+    if regenerate or not config.data_cache_dir.exists():
         converter = Converter(Converter.T2S)
-        data = converter.gather_wuxia()
+        data = converter.gather_data(config.data_dir)
         results, types = preprocess_data(data)
-        logging.info("start")
+        logger.info(types)
         dataset = Dataset.from_generator(gen, gen_kwargs={"data": results})
-        logging.info("end")
         dataset = dataset.train_test_split(0.2, shuffle=True)
         dataset = dataset.map(add_label, batched=True)
-        dataset.save_to_disk("cache/wuxia")
+        dataset.save_to_disk(config.data_cache_dir)
         return dataset
     else:
-        dataset = load_from_disk("cache/wuxia")
+        dataset = load_from_disk(config.data_cache_dir)
         return dataset
