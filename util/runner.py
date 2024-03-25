@@ -12,7 +12,7 @@ from models.border_model import BorderModel
 
 class Runner:
     def __init__(self, config: NERBertConfig):
-        self.model = BorderModel.from_pretrained(config.checkpoint)
+        self.model = BorderModel.from_pretrained(config.checkpoint, num_labels=3)
         self.dataset = load_data(config)
         self.data_collator = DataCollatorForTokenClassification(
             tokenizer=model_config.tokenizer
