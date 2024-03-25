@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 
@@ -41,7 +40,7 @@ def config_project_logger(level=logging.INFO, name="ner"):
     )
     if not os.path.exists("log"):
         os.mkdir("log")
-    fhd = logging.FileHandler("log/ner.log", encoding="utf-8")
+    fhd = logging.FileHandler("log/ner.log", encoding="utf-8", delay=True)
     fhd.setFormatter(fmt)
     logger.addHandler(fhd)
     logger.setLevel(level)

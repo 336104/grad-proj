@@ -6,7 +6,7 @@ from datasets import Dataset, load_from_disk
 import numpy as np
 from util.t2s import Converter
 from tqdm import tqdm
-
+import os
 
 def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
     results = []
@@ -67,7 +67,7 @@ def gen(data):
 
 
 def load_data(regenerate=False):
-    if regenerate:
+    if regenerate or not os.path.exists('cache/wuxia'):
         converter = Converter(Converter.T2S)
         data = converter.gather_wuxia()
         results, types = preprocess_data(data)
