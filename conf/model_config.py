@@ -1,3 +1,4 @@
+import copy
 import os
 from pathlib import Path
 from transformers import AutoTokenizer
@@ -24,7 +25,7 @@ class NERBertConfig:
         num_train_epochs: int = 20,
     ):
         self.data_dir = Path(data_dir)
-        self.data_cache_dir=Path(data_cache_dir)
+        self.data_cache_dir = Path(data_cache_dir)
         self.names_file = Path(names_file)
         self.location_file = Path(location_file)
         self.orgnization_file = Path(orgnization_file)
@@ -41,6 +42,12 @@ class NERBertConfig:
             os.mkdir("cache")
         if not os.path.exists("log"):
             os.mkdir("log")
+
+    def with_checkpoint(self, checkpoint):
+        new_config = copy.deepcopy(self)
+        new_config.checkpoint = checkpoint
+        new_config.tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        return new_config
 
 
 def from_json_config(config):

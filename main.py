@@ -8,9 +8,11 @@ if __name__ == "__main__":
     parser.add_argument("--eval", action="store_true")
     args = parser.parse_args()
 
-    runner = Runner(model_config)
     if args.train:
+        runner = Runner(model_config)
         runner.train()
     if args.eval:
+        eval_config = model_config.with_checkpoint("")
+        runner = Runner(eval_config)
         eval_result = runner.eval()
         logger.info(eval_result)
