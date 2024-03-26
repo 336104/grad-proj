@@ -6,13 +6,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", action="store_true")
     parser.add_argument("--eval", action="store_true")
+    parser.add_argument("--checkpoint", type=str)
     args = parser.parse_args()
 
     if args.train:
         runner = Runner(model_config)
         runner.train()
     if args.eval:
-        eval_config = model_config.with_checkpoint("")
+        eval_config = model_config.with_checkpoint("cache/NERBorder/" + args.checkpoint)
         runner = Runner(eval_config)
         eval_result = runner.eval()
         logger.info(eval_result)

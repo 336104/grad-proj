@@ -9,5 +9,15 @@
         "eval_batch_size": 16,
         "num_train_epochs": 20,
         "data_cache_dir": "cache/wuxia"
+    },
+    "Erlangshen": {
+        "data_dir": "data/wuxia",
+        "checkpoint": "IDEA-CCNL/Erlangshen-DeBERTa-v2-97M-Chinese",
+        "lr": 2e-5,
+        "output_dir": "cache/NERBorder",
+        "train_batch_size": 16,
+        "eval_batch_size": 16,
+        "num_train_epochs": 20,
+        "data_cache_dir": "cache/wuxia"
     }
 }

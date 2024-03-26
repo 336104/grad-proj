@@ -1,10 +1,7 @@
 from util.preprocess_data import load_data
 from conf import model_config, NERBertConfig
-from transformers import (
-    TrainingArguments,
-    Trainer,
-    DataCollatorForTokenClassification,
-)
+from transformers import TrainingArguments, Trainer, DataCollatorForTokenClassification
+from transformers.trainer_utils import SchedulerType
 from metrics import BorderMetric
 
 from models.border_model import BorderModel
@@ -28,9 +25,10 @@ class Runner:
             evaluation_strategy="epoch",
             save_strategy="epoch",
             load_best_model_at_end=True,
-            save_total_limit=4,
+            save_total_limit=1,
             logging_steps=100,
             metric_for_best_model="f1",
+            lr_scheduler_type=SchedulerType.COSINE,
         )
 
         self.trainer = Trainer(

@@ -1,3 +1,5 @@
+from ast import Try
+from numpy import dtype
 from pymilvus import (
     Collection,
     connections,
@@ -13,26 +15,38 @@ def connect():
     connections.connect(alias="default", host="localhost", port="19530")
 
 
-def prepare_schema():
-    book_id = FieldSchema(name="book_id", dtype=DataType.INT64, is_primary=True)
-    book_name = FieldSchema(
-        name="book_name",
-        dtype=DataType.VARCHAR,
-        max_length=200,
-        default_value="Unknown",
+def create_schema():
+    entity_id = FieldSchema(name="entity_id", dtype=DataType.INT64, is_primary=True)
+    entity = FieldSchema(name="entity", dtype=DataType.VARCHAR)
+    entity_vector = FieldSchema(
+        name="entity_vector", dtype=DataType.FLOAT_VECTOR, dim=768
     )
-    word_count = FieldSchema(
-        name="word_count", dtype=DataType.INT64, default_value=9999
-    )
-    book_intro = FieldSchema(name="book_intro", dtype=DataType.FLOAT_VECTOR, dim=2)
-    schema = CollectionSchema(
-        fields=[book_id, book_name, word_count, book_intro],
-        description="Test book search",
-        enable_dynamic_field=True,
-    )
-    collection_name = "book"
+    entity_type = FieldSchema(name="entity_type", dtype=DataType.VARCHAR)
+    schema = CollectionSchema(fields=[entity_id, entity, entity_vector, entity_type])
+    collection = Collection(name="entity", schema=schema, using="default")
+    return collection
 
-    return schema, collection_name
+def insert_data():
+# def prepare_schema():
+#     book_id = FieldSchema(name="book_id", dtype=DataType.INT64, is_primary=True)
+#     book_name = FieldSchema(
+#         name="book_name",
+#         dtype=DataType.VARCHAR,
+#         max_length=200,
+#         default_value="Unknown",
+#     )
+#     word_count = FieldSchema(
+#         name="word_count", dtype=DataType.INT64, default_value=9999
+#     )
+#     book_intro = FieldSchema(name="book_intro", dtype=DataType.FLOAT_VECTOR, dim=2)
+#     schema = CollectionSchema(
+#         fields=[book_id, book_name, word_count, book_intro],
+#         description="Test book search",
+#         enable_dynamic_field=True,
+#     )
+#     collection_name = "book"
+
+#     return schema, collection_name
 
 
 def create_schema(schema, collection_name):
