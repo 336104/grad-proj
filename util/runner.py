@@ -48,5 +48,5 @@ class Runner:
         if push_to_hub:
             self.trainer.push_to_hub()
 
-    def predict(self, dataset):
-        return self.trainer.predict(dataset)
+    def eval(self):
+        return self.trainer.evaluate(self.dataset["test"])
