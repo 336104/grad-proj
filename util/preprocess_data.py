@@ -27,7 +27,7 @@ def preprocess_data(data: List[dict]) -> Tuple[List[dict], Set[str]]:
             entities = []
             for e in record["entities"]:
                 e_type, [e_type_name] = e.values()
-                if len(e_type_name) < 1:
+                if len(e_type_name) <= 1:
                     continue
                 entity_types.add(e_type)
                 for match in re.finditer(e_type_name, sentence):

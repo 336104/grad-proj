@@ -14,4 +14,7 @@ with open("./conf/model_config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 active = config["active"]
 model_config = from_json_config(config[active])
-__all__ = [NERBertConfig, model_config, project_logger_name, logger]
+# 数据库参数
+with open("./conf/db_config.json", "r", encoding="utf-8") as f:
+    db_config = json.load(f)
+__all__ = [NERBertConfig, model_config, project_logger_name, logger, db_config]

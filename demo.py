@@ -1,5 +1,11 @@
-from util.runner import Runner
-from conf import model_config
+import time
+from tqdm import tqdm,trange
 
-runner = Runner(model_config)
-runner.train()
+
+def ge():
+    for i in trange(100):
+        yield i
+
+
+for i in ge():
+    time.sleep(1)

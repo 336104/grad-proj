@@ -21,7 +21,7 @@ class BorderInferencer:
                     start = i
         return entities
 
-    def decode(self, tokenized_input, labels):
+    def decode(self, tokenized_input, labels, color_output):
         all_entities = []
         for i in range(labels.size(0)):
 
@@ -33,23 +33,25 @@ class BorderInferencer:
             sample_entities = deque()
             for start, end in reversed(entities):
                 sample_entities.appendleft("".join(tokens[start:end]))
-                tokens.insert(end, Style.RESET_ALL)
-                tokens.insert(start, Back.YELLOW)
-            print("".join(tokens))
+                if color_output:
+                    tokens.insert(end, Style.RESET_ALL)
+                    tokens.insert(start, Back.YELLOW)
+            if color_output:
+                print("".join(tokens))
             all_entities.append(sample_entities)
         return all_entities
 
-    def __call__(self, text):
+    def __call__(self, text, color_output=True):
         tokenized_input = self.tokenizer(
             text, return_tensors="pt", padding=True, truncation=True
         )
         output = self.model(**tokenized_input)
         labels = output.logits.argmax(dim=-1)
-        return self.decode(tokenized_input, labels)
+        return self.decode(tokenized_input, labels, color_output)
 
 
 if __name__ == "__main__":
-    cls = BorderInferencer("cache/NERBorder/checkpoint-8320")
+    cls = BorderInferencer("cache/NERBorder/bert-base-chinese")
     print(
         cls(
             [
