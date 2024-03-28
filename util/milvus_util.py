@@ -7,7 +7,7 @@ from pymilvus import (
     utility,
 )
 from sentence_transformers import SentenceTransformer
-from conf import db_config
+from conf import db_config, logger
 from util.inference import BorderInferencer
 from collections import Counter
 from tqdm import trange
@@ -107,6 +107,24 @@ def batch_generator(dataset, batch_size):
         yield dataset[batch_size * i : batch_size * i + batch_size]
 
 
+# def entity_dict():
+#     from util.preprocess_data import load_data
+#     from conf import model_config
+#     from collections import defaultdict
+
+#     dataset = load_data(model_config)
+#     dataset = dataset["train"]
+#     et_dict = defaultdict(lambda: "人物")
+#     et_dict.update(
+#         {
+#             entity["type_name"]: entity["type"]
+#             for entities in dataset["entities"]
+#             for entity in entities
+#         }
+#     )
+#     return et_dict
+
+
 def eval_dataset(dataset, checkpoint):
     connect()
     collection = Collection(db_config["collection_name"])
@@ -121,6 +139,17 @@ def eval_dataset(dataset, checkpoint):
         predictions = inferencer(input_texts, color_output=False)
         for idx, prediction in enumerate(predictions):
             entities = list(prediction)
+            #
+            # types = [et_dict[entity] for entity in entities]
+            # pred_result = Counter(
+            #     [(entity, e_type) for entity, e_type in zip(entities, types)]
+            # )
+            # ref_result = Counter(
+            #     [
+            #         (entity["type_name"], entity["type"])
+            #         for entity in batch["entities"][idx]
+            #     ]
+            # )
             embeddings = model.encode(entities, device="cuda", show_progress_bar=False)
             types = search_entity(collection, embeddings)
             pred_result = Counter(
@@ -132,16 +161,16 @@ def eval_dataset(dataset, checkpoint):
                     for entity in batch["entities"][idx]
                 ]
             )
+            pred_result = Counter([entity for entity in entities])
+            ref_result = Counter(
+                [entity["type_name"] for entity in batch["entities"][idx]]
+            )
             tp += len(list((pred_result & ref_result).elements()))
             fn += len(list((ref_result - pred_result).elements()))
             fp += len(list((pred_result - ref_result).elements()))
-            precision = tp / (fp + tp)
-            recall = tp / (fn + tp)
-            f1 = 2 * (precision * recall) / (precision + recall)
-            print(precision, recall, f1)
-            if f1 < 90:
-                print(input_texts[idx], predictions[idx], batch["entities"][idx], types)
-                # return
+            # logger.info(
+            #     (input_texts[idx], predictions[idx], batch["entities"][idx], types)
+            # )
     precision = tp / (fp + tp)
     recall = tp / (fn + tp)
     f1 = 2 * (precision * recall) / (precision + recall)

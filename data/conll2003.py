@@ -30,7 +30,7 @@ def add_border_labels(examples):
             else:
                 border_label.append(border_flag + 1)
         border_labels.append(border_label)
-    return {"border_labels": border_labels}
+    return {"labels": border_labels}
 
 
 def tokenize_and_align_labels(examples):
